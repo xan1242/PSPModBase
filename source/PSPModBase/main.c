@@ -2,6 +2,8 @@
 // PSP userspace module example for modding games
 // A module that can be used as a basis to build mods for PSP games and apps
 // 
+// by xan1242 / Tenjoin 
+// 
 // This is based on PSP modules from Widescreen Fixes Pack by ThirteenAG (and others!)
 // https://github.com/ThirteenAG/WidescreenFixesPack
 // 
@@ -9,13 +11,16 @@
 // It will fail to load if the module size is bigger than certain size.
 // PPSSPP works fine otherwise.
 // 
-// by xan1242 / Tenjoin 
-//
+// NOTE 2: Since this is a userspace plugin, please be aware that for any kernel function,
+// you MUST use bridging functions (such as kubridge or sctrl functions)
+// 
+
 
 #include <pspsdk.h>
 #include <pspuser.h>
 #include <pspctrl.h>
 #include <systemctrl.h>
+#include <kubridge.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -44,6 +49,9 @@
 #ifndef __INTELLISENSE__
 PSP_MODULE_INFO(MODULE_NAME, 0, MODULE_VERSION_MAJOR, MODULE_VERSION_MINOR);
 #endif
+
+// Forward-declare initialization function
+int MainInit();
 
 int bPPSSPP = 0;
 static STMOD_HANDLER previous;
@@ -81,51 +89,11 @@ int logPrintf(const char* text, ...) {
 #endif
 
 //
-// MainInit
-// Put your initialization code here
-//
-int MainInit() {
-#ifdef LOG
-    logPrintf(MODULE_NAME " MainInit");
-#endif
-
-    /*
-    * Here you can use the injector to modify instructions or reroute the code to
-    * another place (e.g. a function in this module)
-    * 
-    * Keep in mind that the injector recalculates addresses based on the address 
-    * you set with SetGameBaseAddress and SetModuleBaseAddress!
-    * 
-    * 
-    * Example: we can make a call to a function "MyFunction" like so:
-    * injector.MakeCALL(0x189560, (uintptr_t)&MyFunction);
-    * 
-    * Example 2: we can write a NOP at any instruction like so:
-    * injector.MakeNOP(0x1477DC);
-    * 
-    * For more examples of usage, check WidescreenFixesPack:
-    * https://github.com/ThirteenAG/WidescreenFixesPack
-    */
-
-    // In this example we'll simply set up the ini reader, read the value from the ini and print it
-    // The ini in question in the source here is: data/PSPModBase.ini
-
-    // Set up the inireader path
-    inireader.SetIniPath(inipath);
-
-    // And then read & do something with the value...
-    int iniValue = inireader.ReadInteger("MAIN", "Value", 0);
-    sceKernelPrintf("ini value is: %d\n", iniValue);
-
-    // not really necessary but kept to flush the cache to the disk
-    sceKernelDcacheWritebackAll();
-    return 0;
-}
-
-//
 // CheckModules
 // Executes only once on startup
-// This works both on a real PSP and PPSSPP, but we limit this to PPSSPP because OnModuleStart is better 
+// This works both on a real PSP and PPSSPP, but we limit this to PPSSPP because:
+// 1. OnModuleStart is better
+// 2. We need to escalate to kernel mode permissions on real hardware
 //
 static void CheckModules() 
 { 
@@ -185,6 +153,12 @@ static void CheckModules()
 // OnModuleStart
 // Executes any time a module is started
 // This currently only works on PSP CFW, not on PPSSPP
+// 
+// NOTE: Be very careful with the code you put in here!
+// Often times, if you do something bad here, this module will NOT start.
+// Usually with the error SCE_KERNEL_ERROR_LIBRARY_NOTFOUND (0x8002013C)
+// 
+// Example: Calling sceKernelFindModuleByName without elevation here will make the module not load.
 //
 int OnModuleStart(SceModule2* mod) 
 {
@@ -199,9 +173,11 @@ int OnModuleStart(SceModule2* mod)
         logPrintf("Found module " MODULE_NAME_INTERNAL);
         logPrintf("text_addr: 0x%X\ntext_size: 0x%X", mod->text_addr, mod->text_size);
 #endif
-        SceModule* this_module = sceKernelFindModuleByName(MODULE_NAME);
+        // IMPORTANT: we use kuBridge to elevate to kernel permissions!
+        SceModule this_module = { 0 };
+        int kuErrCode = kuKernelFindModuleByName(MODULE_NAME, &this_module);
 #ifdef LOG
-        if (this_module != NULL)
+        if (kuErrCode == 0)
         {
             logPrintf("PRX module " MODULE_NAME);
             logPrintf("text_addr: 0x%X\ntext_size: 0x%X", this_module->text_addr, this_module->text_size);
@@ -209,8 +185,8 @@ int OnModuleStart(SceModule2* mod)
 #endif
 
         injector.SetGameBaseAddress(mod->text_addr, mod->text_size);
-        if (this_module != NULL) // this should NOT fail, or else you can crash the game!
-            injector.SetModuleBaseAddress(this_module->text_addr, this_module->text_addr);
+        if (kuErrCode == 0) // this should NOT fail, or else you can crash the game!
+            injector.SetModuleBaseAddress(this_module.text_addr, this_module.text_addr);
 
         MainInit();
     }
@@ -282,5 +258,47 @@ int module_start(SceSize argc, void* argp)
     else // PSP
         previous = sctrlHENSetStartModuleHandler(OnModuleStart);
 
+    return 0;
+}
+
+//
+// MainInit
+// Put your initialization code here
+//
+int MainInit() {
+#ifdef LOG
+    logPrintf(MODULE_NAME " MainInit");
+#endif
+
+    /*
+    * Here you can use the injector to modify instructions or reroute the code to
+    * another place (e.g. a function in this module)
+    *
+    * Keep in mind that the injector recalculates addresses based on the address
+    * you set with SetGameBaseAddress and SetModuleBaseAddress!
+    *
+    *
+    * Example: we can make a call to a function "MyFunction" like so:
+    * injector.MakeCALL(0x189560, (uintptr_t)&MyFunction);
+    *
+    * Example 2: we can write a NOP at any instruction like so:
+    * injector.MakeNOP(0x1477DC);
+    *
+    * For more examples of usage, check WidescreenFixesPack:
+    * https://github.com/ThirteenAG/WidescreenFixesPack
+    */
+
+    // In this example we'll simply set up the ini reader, read the value from the ini and print it
+    // The ini in question in the source here is: data/PSPModBase.ini
+
+    // Set up the inireader path
+    inireader.SetIniPath(inipath);
+
+    // And then read & do something with the value...
+    int iniValue = inireader.ReadInteger("MAIN", "Value", 0);
+    sceKernelPrintf("ini value is: %d\n", iniValue);
+
+    // not really necessary but kept to flush the cache to the disk
+    sceKernelDcacheWritebackAll();
     return 0;
 }

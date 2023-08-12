@@ -80,7 +80,7 @@ powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.
 :: Exit on make error
 if !errorlevel! neq 0 exit /b !errorlevel!
 </NMakeCleanCommandLine>
-    <NMakeIncludeSearchPath>.\includes;.\external\pspsdk\usr\local\pspdev\bin;.\external\pspsdk\usr\local\pspdev\psp\sdk\include</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>.\includes;.\external\pspsdk\usr\local\pspdev\bin;.\external\pspsdk\usr\local\pspdev\psp\include;.\external\pspsdk\usr\local\pspdev\psp\sdk\include</NMakeIncludeSearchPath>
     <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     <NMakePreprocessorDefinitions>_PSP_FW_VERSION=150;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
   </PropertyGroup>
@@ -123,7 +123,7 @@ powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.
 :: Exit on make error
 if !errorlevel! neq 0 exit /b !errorlevel!
 </NMakeCleanCommandLine>
-    <NMakeIncludeSearchPath>.\includes;.\external\pspsdk\usr\local\pspdev\bin;.\external\pspsdk\usr\local\pspdev\psp\sdk\include</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>.\includes;.\external\pspsdk\usr\local\pspdev\bin;.\external\pspsdk\usr\local\pspdev\psp\include;.\external\pspsdk\usr\local\pspdev\psp\sdk\include</NMakeIncludeSearchPath>
     <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     <NMakePreprocessorDefinitions>_PSP_FW_VERSION=150;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
   </PropertyGroup>

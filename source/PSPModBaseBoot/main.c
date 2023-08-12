@@ -2,12 +2,13 @@
 // PSP userspace plugin bootstraper
 // A kernel plugin which waits for the game to load before starting the userspace module.
 // 
-// NOTE: this is intended for use with PSP CFW only! You do not need this on PPSSPP!
+// by xan1242 / Tenjoin 
 // 
 // Portions of code taken from pspdev/pspsdk 'prxloader' sample and psplinkusb.
 // 
-// by xan1242 / Tenjoin 
+// NOTE: this is intended for use with PSP CFW only! You do not need this on PPSSPP!
 //
+
 
 #include <pspsdk.h>
 #include <pspkernel.h>

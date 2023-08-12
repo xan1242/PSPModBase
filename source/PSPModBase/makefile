@@ -9,7 +9,7 @@ ASFLAGS = $(CFLAGS)
 BUILD_PRX = 1
 PRX_EXPORTS = exports.exp
 
-LIBS = -lpspsystemctrl_user -lm
+LIBS = -lpspsystemctrl_user -lpspkubridge -lm
 
 PSPSDK = $(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build_prx.mak
