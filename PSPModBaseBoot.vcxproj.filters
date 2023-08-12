@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="source">
+      <UniqueIdentifier>{ee907bdc-a95a-4dac-bc98-25221fdb234b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\PSPModBaseBoot">
+      <UniqueIdentifier>{b85c3f64-e2b7-4caf-825a-1d9dcf12d02e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\source\PSPModBaseBoot\makefile">
+      <Filter>source\PSPModBaseBoot</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include=".\source\PSPModBaseBoot\main.c">
+      <Filter>source\PSPModBaseBoot</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

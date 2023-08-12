@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="data">
+      <UniqueIdentifier>{5F91957C-4BC8-960D-F4B4-7C10E0CA120F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{ee907bdc-a95a-4dac-bc98-25221fdb234b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\PSPModBase">
+      <UniqueIdentifier>{b85c3f64-e2b7-4caf-825a-1d9dcf12d02e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\data\plugin.ini">
+      <Filter>data</Filter>
+    </None>
+    <None Include="data\PSPModBase.ini">
+      <Filter>data</Filter>
+    </None>
+    <None Include=".\source\PSPModBase\makefile">
+      <Filter>source\PSPModBase</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include=".\source\PSPModBase\main.c">
+      <Filter>source\PSPModBase</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

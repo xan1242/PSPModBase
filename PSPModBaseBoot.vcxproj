@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{97CF17A1-108A-4853-AE3E-047E2055393B}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>MakeFileProj</Keyword>
+    <ProjectName>PSPModBaseBoot</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <OutDir>.\build\</OutDir>
+    <IntDir>obj\Win32\Release\PSPModBaseBoot\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <OutDir>.\build\</OutDir>
+    <IntDir>obj\Win32\Debug\PSPModBaseBoot\</IntDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <NMakeOutput>$(OutDir)PSPModBaseBoot.prx</NMakeOutput>
+    <NMakeBuildCommandLine>@echo off
+setlocal EnableDelayedExpansion
+
+:: Start the "make" process
+:: You need to launch it via a script that sets the path variables, such as vsmake.ps1 here
+:: We use Powershell to avoid issues with paths with spaces
+powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.ps1" -C "$(SolutionDir)/source/$(ProjectName)/"
+:: Exit on make error
+if !errorlevel! neq 0 exit /b !errorlevel!
+</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>@echo off
+setlocal EnableDelayedExpansion
+
+:: Start the "make clean" process
+:: You need to launch it via a script that sets the path variables, such as vsmake.ps1 here
+:: We use Powershell to avoid issues with paths with spaces
+powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.ps1" -C "$(SolutionDir)/source/$(ProjectName)/" clean
+:: Exit on make error
+if !errorlevel! neq 0 exit /b !errorlevel!
+
+:: Start the "make" process
+:: You need to launch it via a script that sets the path variables, such as vsmake.ps1 here
+:: We use Powershell to avoid issues with paths with spaces
+powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.ps1" -C "$(SolutionDir)/source/$(ProjectName)/"
+:: Exit on make error
+if !errorlevel! neq 0 exit /b !errorlevel!
+</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>@echo off
+setlocal EnableDelayedExpansion
+
+:: Start the "make clean" process
+:: You need to launch it via a script that sets the path variables, such as vsmake.ps1 here
+:: We use Powershell to avoid issues with paths with spaces
+powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.ps1" -C "$(SolutionDir)/source/$(ProjectName)/" clean
+:: Exit on make error
+if !errorlevel! neq 0 exit /b !errorlevel!
+</NMakeCleanCommandLine>
+    <NMakeIncludeSearchPath>.\includes;.\external\pspsdk\usr\local\pspdev\bin;.\external\pspsdk\usr\local\pspdev\psp\sdk\include</NMakeIncludeSearchPath>
+    <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
+    <NMakePreprocessorDefinitions>_PSP_FW_VERSION=150;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <NMakeOutput>$(OutDir)PSPModBaseBoot.prx</NMakeOutput>
+    <NMakeBuildCommandLine>@echo off
+setlocal EnableDelayedExpansion
+
+:: Start the "make" process
+:: You need to launch it via a script that sets the path variables, such as vsmake.ps1 here
+:: We use Powershell to avoid issues with paths with spaces
+powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.ps1" -C "$(SolutionDir)/source/$(ProjectName)/"
+:: Exit on make error
+if !errorlevel! neq 0 exit /b !errorlevel!
+</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>@echo off
+setlocal EnableDelayedExpansion
+
+:: Start the "make clean" process
+:: You need to launch it via a script that sets the path variables, such as vsmake.ps1 here
+:: We use Powershell to avoid issues with paths with spaces
+powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.ps1" -C "$(SolutionDir)/source/$(ProjectName)/" clean
+:: Exit on make error
+if !errorlevel! neq 0 exit /b !errorlevel!
+
+:: Start the "make" process
+:: You need to launch it via a script that sets the path variables, such as vsmake.ps1 here
+:: We use Powershell to avoid issues with paths with spaces
+powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.ps1" -C "$(SolutionDir)/source/$(ProjectName)/"
+:: Exit on make error
+if !errorlevel! neq 0 exit /b !errorlevel!
+</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>@echo off
+setlocal EnableDelayedExpansion
+
+:: Start the "make clean" process
+:: You need to launch it via a script that sets the path variables, such as vsmake.ps1 here
+:: We use Powershell to avoid issues with paths with spaces
+powershell -ExecutionPolicy Bypass -File "$(SolutionDir)/external/pspsdk/vsmake.ps1" -C "$(SolutionDir)/source/$(ProjectName)/" clean
+:: Exit on make error
+if !errorlevel! neq 0 exit /b !errorlevel!
+</NMakeCleanCommandLine>
+    <NMakeIncludeSearchPath>.\includes;.\external\pspsdk\usr\local\pspdev\bin;.\external\pspsdk\usr\local\pspdev\psp\sdk\include</NMakeIncludeSearchPath>
+    <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
+    <NMakePreprocessorDefinitions>_PSP_FW_VERSION=150;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include=".\source\PSPModBaseBoot\main.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".\source\PSPModBaseBoot\makefile" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

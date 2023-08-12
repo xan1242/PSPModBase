@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33712.159
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PSPModBase", "PSPModBase.vcxproj", "{358ABA7E-A197-E864-2A7E-E44F968AB41B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PSPModBaseBoot", "PSPModBaseBoot.vcxproj", "{97CF17A1-108A-4853-AE3E-047E2055393B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{358ABA7E-A197-E864-2A7E-E44F968AB41B}.Debug|x86.ActiveCfg = Debug|Win32
+		{358ABA7E-A197-E864-2A7E-E44F968AB41B}.Debug|x86.Build.0 = Debug|Win32
+		{358ABA7E-A197-E864-2A7E-E44F968AB41B}.Release|x86.ActiveCfg = Release|Win32
+		{358ABA7E-A197-E864-2A7E-E44F968AB41B}.Release|x86.Build.0 = Release|Win32
+		{97CF17A1-108A-4853-AE3E-047E2055393B}.Debug|x86.ActiveCfg = Debug|Win32
+		{97CF17A1-108A-4853-AE3E-047E2055393B}.Debug|x86.Build.0 = Debug|Win32
+		{97CF17A1-108A-4853-AE3E-047E2055393B}.Release|x86.ActiveCfg = Release|Win32
+		{97CF17A1-108A-4853-AE3E-047E2055393B}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D7239448-005F-4FFB-A3B8-521D7844F3FC}
+	EndGlobalSection
+EndGlobal
