@@ -158,7 +158,8 @@ static void CheckModules()
 // Often times, if you do something bad here, this module will NOT start.
 // Usually with the error SCE_KERNEL_ERROR_LIBRARY_NOTFOUND (0x8002013C)
 // 
-// Example: Calling sceKernelFindModuleByName without elevation here will make the module not load.
+// Example: Calling sceKernelFindModuleByName without elevation here will make the module not start.
+// It will load and you'll be able to see it with the 'modlist' command, but it will NOT work.
 //
 int OnModuleStart(SceModule2* mod) 
 {
