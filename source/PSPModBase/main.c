@@ -92,7 +92,7 @@ int logPrintf(const char* text, ...) {
 // This works both on a real PSP and PPSSPP, but we limit this to PPSSPP because:
 // 1. OnModuleStart is better
 // 2. We need to escalate to kernel mode permissions on real hardware
-// 3. We compensate for a PPSSPP exclusive bug anyway (this may be removed later if it's fixed)
+// 3. We compensate for a PPSSPP exclusive bug anyway (this may be removed later if it's fixed, issue: https://github.com/hrydgard/ppsspp/issues/17894 )
 //
 void CheckModules()
 {
