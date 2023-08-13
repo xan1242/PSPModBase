@@ -13,6 +13,7 @@
 // 
 // NOTE 2: Since this is a userspace plugin, please be aware that for any kernel function,
 // you MUST use bridging functions (such as kubridge or sctrl functions)
+// You may NOT even *link* against or include any protected kernel functions, or else the module will NOT start!
 // 
 
 
@@ -89,48 +90,62 @@ int logPrintf(const char* text, ...) {
 //
 // CheckModules
 // Executes only once on startup
-// This works both on a real PSP and PPSSPP, but we limit this to PPSSPP because:
-// 1. OnModuleStart is better
-// 2. We need to escalate to kernel mode permissions on real hardware
-// 3. We compensate for a PPSSPP exclusive bug anyway (this may be removed later if it's fixed, issue: https://github.com/hrydgard/ppsspp/issues/17894 )
+// This works both on a real PSP and PPSSPP, but we limit this to PPSSPP because OnModuleStart is better
 //
-void CheckModules()
+static void CheckModules()
 {
-    // First we search for the target module...
-    SceModule* mod = sceKernelFindModuleByName(MODULE_NAME_INTERNAL);
-    if (mod == NULL)
-        return;
-
-    // BUG: PPSSPP bug? SceModule is misaligned by 4 bytes...
-    mod = (SceModule*)(((uintptr_t)mod) + 4);
-
+    SceUID modules[10];
+    int count = 0;
+    int bFoundMainModule = 0;
+    int bFoundInternalModule = 0;
+    if (sceKernelGetModuleIdList(modules, sizeof(modules), &count) >= 0)
+    {
+        int i;
+        SceKernelModuleInfo info;
+        for (i = 0; i < count; ++i)
+        {
+            info.size = sizeof(SceKernelModuleInfo);
+            if (sceKernelQueryModuleInfo(modules[i], &info) < 0)
+            {
+                continue;
+            }
+            if (strcmp(info.name, MODULE_NAME_INTERNAL) == 0)
+            {
 #ifdef LOG
-    logPrintf("Found module " MODULE_NAME_INTERNAL);
-    logPrintf("text_addr: 0x%X\ntext_size: 0x%X", mod->text_addr, mod->text_size);
+                logPrintf("Found module " MODULE_NAME_INTERNAL);
+                logPrintf("text_addr: 0x%X\ntext_size: 0x%X", info.text_addr, info.text_size);
 #endif
+                injector.SetGameBaseAddress(info.text_addr, info.text_size);
 
-    // Then we search for this module...
-    SceModule* this_module = sceKernelFindModuleByName(MODULE_NAME);
-    if (this_module == NULL)
-        return;
-
-    this_module = (SceModule*)(((uintptr_t)this_module) + 4);
-
+                bFoundMainModule = 1;
+            }
+            else if (strcmp(info.name, MODULE_NAME) == 0)
+            {
 #ifdef LOG
-    logPrintf("PRX module " MODULE_NAME);
-    logPrintf("text_addr: 0x%X\ntext_size: 0x%X", this_module->text_addr, this_module->text_size);
+                logPrintf("PRX module " MODULE_NAME);
+                logPrintf("text_addr: 0x%X\ntext_size: 0x%X", info.text_addr, info.text_addr);
 #endif
+                injector.SetModuleBaseAddress(info.text_addr, info.text_size);
 
-    injector.SetGameBaseAddress(mod->text_addr, mod->text_size);
-    injector.SetModuleBaseAddress(this_module->text_addr, this_module->text_addr);
+                bFoundInternalModule = 1;
+            }
+    }
+}
 
-    MainInit();
+    if (bFoundInternalModule)
+    {
+        if (bFoundMainModule)
+        {
+            MainInit();
+        }
+    }
 
     // Since we can't use OnModuleStart like on a PSP CFW, we have to scan for modules again
     // if we want to intercept another one. Read the note at the bottom of OnModuleStart for more info.
 
     return;
 }
+
 
 //
 // OnModuleStart
