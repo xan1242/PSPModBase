@@ -299,7 +299,7 @@ int MainInit() {
     int iniValue = inireader.ReadInteger("MAIN", "Value", 0);
     sceKernelPrintf("ini value is: %d\n", iniValue);
 
-    // not really necessary but kept to flush the cache to the disk
+    // not really necessary
     sceKernelDcacheWritebackAll();
     return 0;
 }
