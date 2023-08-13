@@ -58,13 +58,11 @@ static STMOD_HANDLER previous;
 
 #define INI_NAME MODULE_NAME ".ini"
 char inipath[128] = "ms0:/seplugins/" INI_NAME;
-const char* file_ini = INI_NAME;
 
 #ifdef LOG
 #define LOG_NAME MODULE_NAME ".log"
 // Default initialized path
 char logpath[128] = "ms0:/seplugins/" LOG_NAME;
-const char* file_log = LOG_NAME;
 
 //
 // A basic printf logger that writes to a file.
@@ -94,54 +92,39 @@ int logPrintf(const char* text, ...) {
 // This works both on a real PSP and PPSSPP, but we limit this to PPSSPP because:
 // 1. OnModuleStart is better
 // 2. We need to escalate to kernel mode permissions on real hardware
+// 3. We compensate for a PPSSPP exclusive bug anyway (this may be removed later if it's fixed)
 //
-static void CheckModules() 
-{ 
-    SceUID modules[10];
-    int count = 0;
-    int bFoundMainModule = 0;
-    int bFoundInternalModule = 0;
-    if (sceKernelGetModuleIdList(modules, sizeof(modules), &count) >= 0) 
-    {
-        int i;
-        SceKernelModuleInfo info;
-        for (i = 0; i < count; ++i) 
-        {
-            info.size = sizeof(SceKernelModuleInfo);
-            if (sceKernelQueryModuleInfo(modules[i], &info) < 0) 
-            {
-                continue;
-            }
-            if (strcmp(info.name, MODULE_NAME_INTERNAL) == 0) 
-            {
+void CheckModules()
+{
+    // First we search for the target module...
+    SceModule* mod = sceKernelFindModuleByName(MODULE_NAME_INTERNAL);
+    if (mod == NULL)
+        return;
+
+    // BUG: PPSSPP bug? SceModule is misaligned by 4 bytes...
+    mod = (SceModule*)(((uintptr_t)mod) + 4);
+
 #ifdef LOG
-                logPrintf("Found module " MODULE_NAME_INTERNAL);
-                logPrintf("text_addr: 0x%X\ntext_size: 0x%X", info.text_addr, info.text_size);
+    logPrintf("Found module " MODULE_NAME_INTERNAL);
+    logPrintf("text_addr: 0x%X\ntext_size: 0x%X", mod->text_addr, mod->text_size);
 #endif
-                injector.SetGameBaseAddress(info.text_addr, info.text_size);
 
-                bFoundMainModule = 1;
-            }
-            else if (strcmp(info.name, MODULE_NAME) == 0) 
-            {
+    // Then we search for this module...
+    SceModule* this_module = sceKernelFindModuleByName(MODULE_NAME);
+    if (this_module == NULL)
+        return;
+
+    this_module = (SceModule*)(((uintptr_t)this_module) + 4);
+
 #ifdef LOG
-                logPrintf("PRX module " MODULE_NAME);
-                logPrintf("text_addr: 0x%X\ntext_size: 0x%X", info.text_addr, info.text_addr);
+    logPrintf("PRX module " MODULE_NAME);
+    logPrintf("text_addr: 0x%X\ntext_size: 0x%X", this_module->text_addr, this_module->text_size);
 #endif
-                injector.SetModuleBaseAddress(info.text_addr, info.text_size);
 
-                bFoundInternalModule = 1;
-            }
-        }
-    }
+    injector.SetGameBaseAddress(mod->text_addr, mod->text_size);
+    injector.SetModuleBaseAddress(this_module->text_addr, this_module->text_addr);
 
-    if (bFoundInternalModule)
-    {
-        if (bFoundMainModule)
-        {
-            MainInit();
-        }
-    }
+    MainInit();
 
     // Since we can't use OnModuleStart like on a PSP CFW, we have to scan for modules again
     // if we want to intercept another one. Read the note at the bottom of OnModuleStart for more info.
@@ -168,12 +151,14 @@ int OnModuleStart(SceModule2* mod)
     logPrintf("OnModuleStart: %s", modname);
 #endif
 
+    // First we search for the target module...
     if (strcmp(modname, MODULE_NAME_INTERNAL) == 0)
     {
 #ifdef LOG
         logPrintf("Found module " MODULE_NAME_INTERNAL);
         logPrintf("text_addr: 0x%X\ntext_size: 0x%X", mod->text_addr, mod->text_size);
 #endif
+        // Then we search for this module...
         // IMPORTANT: we use kuBridge to elevate to kernel permissions!
         SceModule this_module = { 0 };
         int kuErrCode = kuKernelFindModuleByName(MODULE_NAME, &this_module);
@@ -181,7 +166,7 @@ int OnModuleStart(SceModule2* mod)
         if (kuErrCode == 0)
         {
             logPrintf("PRX module " MODULE_NAME);
-            logPrintf("text_addr: 0x%X\ntext_size: 0x%X", this_module->text_addr, this_module->text_size);
+            logPrintf("text_addr: 0x%X\ntext_size: 0x%X", this_module.text_addr, this_module.text_size);
         }
 #endif
 
@@ -236,14 +221,14 @@ int module_start(SceSize argc, void* argp)
         strcpy(inipath, (char*)argp);
         ptr_path = strrchr(inipath, '/');
         if (ptr_path)
-            strcpy(ptr_path + 1, file_ini);
+            strcpy(ptr_path + 1, INI_NAME);
         else
             SetDefaultPaths();
 #ifdef LOG
         strcpy(logpath, (char*)argp);
         ptr_path = strrchr(logpath, '/');
         if (ptr_path)
-            strcpy(ptr_path + 1, file_log);
+            strcpy(ptr_path + 1, LOG_NAME);
         else
             SetDefaultPaths();
 #endif
