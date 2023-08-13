@@ -25,7 +25,10 @@
 // This is the module at the same path as this booter module.
 #define MODULE_BOOT_TARGET "PSPModBase.prx"
 
-
+// (optional) Define the name of the game's main thread here
+// If defined, the bootstrapper will suspend the thread defined here
+// It will wait until the target module starts.
+//#define MODULE_INTERNAL_THREAD_NAME "user_main"
 
 // This is the name of this module that will be presented to the PSP OS.
 #define MODULE_NAME "PSPModBaseBoot"
@@ -41,22 +44,6 @@ PSP_MODULE_INFO(MODULE_NAME, PSP_MODULE_KERNEL, MODULE_VERSION_MAJOR, MODULE_VER
 // We define the main thread as a kernel thread just in case.
 PSP_MAIN_THREAD_ATTR(0);
 #endif
-
-//int build_args(char *args, const char *execfile, int argc, char **argv)
-//{
-//	int loc = 0;
-//	int i;
-//
-//	strcpy(args, execfile);
-//	loc += strlen(execfile) + 1;
-//	for(i = 0; i < argc; i++)
-//	{
-//		strcpy(&args[loc], argv[i]);
-//		loc += strlen(argv[i]) + 1;
-//	}
-//
-//	return loc;
-//}
 
 SceUID load_module(const char *path, int flags, int type)
 {
@@ -81,28 +68,6 @@ SceUID load_module(const char *path, int flags, int type)
 	return sceKernelLoadModule(path, flags, type > 0 ? &option : NULL);
 }
 
-// we do not need these variants from psplink
-// int load_start_module(const char *name, int argc, char **argv)
-// {
-// 	SceUID modid;
-// 	int status;
-// 	char args[1024];
-// 	int len;
-// 
-// 	modid = load_module(name, 0, 0);
-// 	if(modid >= 0)
-// 	{
-// 		len = build_args(args, name, argc, argv);
-// 		modid = sceKernelStartModule(modid, len, (void *) args, &status, NULL);
-// 	}
-// 	else
-// 	{
-// 		Kprintf("lsm: Error loading module %s %08X\n", name, modid);
-// 	}
-// 
-// 	return modid;
-// }
-
 int load_start_module2(const char *name, SceSize args, void *argp, int type)
 {
 	SceUID mod = load_module(name, 0, type);
@@ -122,6 +87,34 @@ int load_start_module2(const char *name, SceSize args, void *argp, int type)
 	return mod;
 }
 
+#ifdef MODULE_INTERNAL_THREAD_NAME
+SceUID FindThreadByName(const char* name)
+{
+	SceUID ids[100];
+	int ret;
+	int count;
+
+	memset(ids, 0, 100 * sizeof(SceUID));
+	ret = sceKernelGetThreadmanIdList(SCE_KERNEL_TMID_Thread, ids, 100, &count);
+	if (ret >= 0)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			SceKernelThreadInfo info;
+			memset(&info, 0, sizeof(info));
+			info.size = sizeof(info);
+			ret = sceKernelReferThreadStatus(ids[i], &info);
+			if (ret == 0)
+			{
+				if (strcmp(name, info.name) == 0)
+					return ids[i];
+			}
+		}
+	}
+	return 0;
+}
+#endif
+
 int _main(SceSize args, void *argp)
 {
 	SceUID modid;
@@ -131,7 +124,17 @@ int _main(SceSize args, void *argp)
 	// this is crucial -- we MUST wait for the game module to *load* but not yet start!
 	// timing is important here because we want to avoid any lockups, crashes or other weird behavior!
 	while(sceKernelFindModuleByName(MODULE_NAME_INTERNAL) == NULL) sceKernelDelayThread(1);
-
+#ifdef MODULE_INTERNAL_THREAD_NAME
+	SceUID thid = 0;
+	do
+	{
+		thid = FindThreadByName(MODULE_INTERNAL_THREAD_NAME);
+		if (thid != 0)
+			break;
+		sceKernelDelayThread(1);
+	} while (thid == 0);
+	sceKernelSuspendThread(thid);
+#endif
 	// take the path from the argp
 	strcpy(path, (const char*)argp);
 	slash = strrchr(path, '/');
@@ -148,11 +151,11 @@ int _main(SceSize args, void *argp)
 	modid = load_start_module2(path, args, argp, 1);
 	if(modid < 0)
 		Kprintf("Failed to Load/Start module '%s' Error: 0x%08X\n", path, modid);
-	
-	
+
+#ifdef MODULE_INTERNAL_THREAD_NAME
+	sceKernelResumeThread(thid);
+#endif
 	sceKernelSelfStopUnloadModule(1, 0, NULL);
-	sceKernelDelayThread(2000000);
-	sceKernelExitGame();
 
 	return 0;
 }
