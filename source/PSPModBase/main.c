@@ -90,7 +90,7 @@ int logPrintf(const char* text, ...) {
 //
 // CheckModules
 // Executes only once on startup
-// This works both on a real PSP and PPSSPP, but we limit this to PPSSPP because OnModuleStart is better
+// This works both on a real PSP and PPSSPP, but we limit this to PPSSPP because kuKernelFindModuleByName is better
 //
 static void CheckModules()
 {
@@ -146,56 +146,53 @@ static void CheckModules()
     return;
 }
 
+//
+// CheckModulesPSP
+// Executes only once on startup
+// Works only on PSP CFW
+//
+void CheckModulesPSP()
+{
+    SceModule2 mod = { 0 };
+    int kuErrCode = kuKernelFindModuleByName(MODULE_NAME_INTERNAL, &mod);
+    if (kuErrCode != 0)
+        return;
+
+    SceModule2 this_module = { 0 };
+    kuErrCode = kuKernelFindModuleByName(MODULE_NAME, &this_module);
+    if (kuErrCode != 0)
+        return;
+
+    injector.SetGameBaseAddress(mod.text_addr, mod.text_size);
+    injector.SetModuleBaseAddress(this_module.text_addr, this_module.text_addr);
+
+    MainInit();
+}
 
 //
 // OnModuleStart
 // Executes any time a module is started
 // This currently only works on PSP CFW, not on PPSSPP
-// 
-// NOTE: Be very careful with the code you put in here!
-// Often times, if you do something bad here, this module will NOT start.
-// Usually with the error SCE_KERNEL_ERROR_LIBRARY_NOTFOUND (0x8002013C)
-// 
-// Example: Calling sceKernelFindModuleByName without elevation here will make the module not start.
-// It will load and you'll be able to see it with the 'modlist' command, but it will NOT work.
+//
+// You can use this to hook any subsequently loaded modules.
 //
 int OnModuleStart(SceModule2* mod) 
 {
-    char* modname = mod->modname;
 #ifdef LOG
-    logPrintf("OnModuleStart: %s", modname);
+    logPrintf("OnModuleStart: %s", mod->modname);
 #endif
 
-    // First we search for the target module...
-    if (strcmp(modname, MODULE_NAME_INTERNAL) == 0)
-    {
-#ifdef LOG
-        logPrintf("Found module " MODULE_NAME_INTERNAL);
-        logPrintf("text_addr: 0x%X\ntext_size: 0x%X", mod->text_addr, mod->text_size);
-#endif
-        // Then we search for this module...
-        // IMPORTANT: we use kuBridge to elevate to kernel permissions!
-        SceModule this_module = { 0 };
-        int kuErrCode = kuKernelFindModuleByName(MODULE_NAME, &this_module);
-#ifdef LOG
-        if (kuErrCode == 0)
-        {
-            logPrintf("PRX module " MODULE_NAME);
-            logPrintf("text_addr: 0x%X\ntext_size: 0x%X", this_module.text_addr, this_module.text_size);
-        }
-#endif
-
-        injector.SetGameBaseAddress(mod->text_addr, mod->text_size);
-        if (kuErrCode == 0) // this should NOT fail, or else you can crash the game!
-            injector.SetModuleBaseAddress(this_module.text_addr, this_module.text_addr);
-
-        MainInit();
-    }
-
-    // You can intercept other modules the same way as MODULE_NAME_INTERNAL and hook in the same way
-    // with new initializers and new base addresses.
+    // You can intercept other modules with new initializers and new base addresses.
     // There are some games with separate modules so you will cases where you have to switch around.
     // injector only works with one at a time, so keep that in mind and update the base addresses accordingly!
+
+    // To search for a module, you may use the 'mod' argument here.
+    // Example:
+    // if (strcmp(mod->modname, "MyModuleName") == 0)
+    // {
+    //      Hook stuff here...
+    // }
+    //
 
     if (!previous)
         return 0;
@@ -257,7 +254,10 @@ int module_start(SceSize argc, void* argp)
     if (bPPSSPP)
         CheckModules(); // scan the modules using normal/official syscalls (https://github.com/hrydgard/ppsspp/pull/13335#issuecomment-689026242)
     else // PSP
+    {
+        CheckModulesPSP();
         previous = sctrlHENSetStartModuleHandler(OnModuleStart);
+    }
 
     return 0;
 }

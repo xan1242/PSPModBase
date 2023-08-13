@@ -70,6 +70,7 @@ SceUID load_module(const char *path, int flags, int type)
 
 int load_start_module2(const char *name, SceSize args, void *argp, int type)
 {
+	Kprintf(MODULE_NAME": Launching module: %s", name);
 	SceUID mod = load_module(name, 0, type);
 	if (mod < 0)
 	{
@@ -125,6 +126,7 @@ int _main(SceSize args, void *argp)
 	// timing is important here because we want to avoid any lockups, crashes or other weird behavior!
 	while(sceKernelFindModuleByName(MODULE_NAME_INTERNAL) == NULL) sceKernelDelayThread(1);
 #ifdef MODULE_INTERNAL_THREAD_NAME
+	Kprintf(MODULE_NAME ": Searching thread: " MODULE_INTERNAL_THREAD_NAME);
 	SceUID thid = 0;
 	do
 	{
@@ -133,6 +135,7 @@ int _main(SceSize args, void *argp)
 			break;
 		sceKernelDelayThread(1);
 	} while (thid == 0);
+	Kprintf(MODULE_NAME ": Suspending thread: " MODULE_INTERNAL_THREAD_NAME);
 	sceKernelSuspendThread(thid);
 #endif
 	// take the path from the argp
@@ -153,6 +156,7 @@ int _main(SceSize args, void *argp)
 		Kprintf("Failed to Load/Start module '%s' Error: 0x%08X\n", path, modid);
 
 #ifdef MODULE_INTERNAL_THREAD_NAME
+	Kprintf(MODULE_NAME ": Resuming thread " MODULE_INTERNAL_THREAD_NAME);
 	sceKernelResumeThread(thid);
 #endif
 	sceKernelSelfStopUnloadModule(1, 0, NULL);
