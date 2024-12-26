@@ -3,6 +3,12 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+uint32_t parseCommand(uint32_t command, uint32_t from, uint32_t to)
+{
+    uint32_t mask = ((1 << (to - from + 1)) - 1) << from;
+    return (command & mask) >> from;
+}
+
 int AllocMemBlock(int size, int* id) {
     *id = sceKernelAllocPartitionMemory(PSP_MEMORY_PARTITION_USER, "alloc", PSP_SMEM_Low, size, NULL);
     if (*id < 0) {
@@ -21,12 +27,24 @@ void FreeMemBlock(int id)
 
 void* GetGP()
 {
-    unsigned int gp;
-    asm(
+    void* gp;
+    asm volatile (
         "move %0, $gp\n"
         : "=r"(gp)
     );
     return gp;
+}
+
+void* SetGP(void* gp)
+{
+    void* oldgp;
+    asm volatile (
+        "move %0, $gp\n"
+        "move $gp, %1\n"
+        : "=r"(oldgp)
+        : "r"(gp)
+        );
+    return oldgp;
 }
 
 void SetModuleBaseAddress(uintptr_t addr, size_t size)
@@ -137,25 +155,41 @@ double ReadMemoryDouble(uintptr_t addr)
     return *(double*)(adjustAddress(addr));
 }
 
-void MakeJMP(uintptr_t at, uintptr_t dest)
+uintptr_t GetBranchDestination(uintptr_t at)
 {
-    WriteMemory32(adjustAddress(at), (0x08000000 | ((adjustAddress(dest) & 0x0FFFFFFC) >> 2)));
+    static const uint32_t instr_len = 4;
+
+    uint8_t J = parseCommand(j(0x123456), 26, 31);
+    uint8_t JAL = parseCommand(jal(0x123456), 26, 31);
+
+    uint32_t bytes = ReadMemory32(adjustAddress(at));
+    uint8_t instr = parseCommand(bytes, 26, 31);
+
+    if (instr == J || instr == JAL)
+        return parseCommand(bytes, 0, 25) * instr_len;
+    return 0;
 }
 
-void MakeJMPwNOP(uintptr_t at, uintptr_t dest)
+uintptr_t MakeJMP(uintptr_t at, uintptr_t dest)
 {
+    uintptr_t bd = GetBranchDestination(adjustAddress(at));
+    WriteMemory32(adjustAddress(at), (0x08000000 | ((adjustAddress(dest) & 0x0FFFFFFC) >> 2)));
+    return bd;
+}
+
+uintptr_t MakeJMPwNOP(uintptr_t at, uintptr_t dest)
+{
+    uintptr_t bd = GetBranchDestination(adjustAddress(at));
     WriteMemory32(adjustAddress(at), (0x08000000 | ((adjustAddress(dest) & 0x0FFFFFFC) >> 2)));
     MakeNOP(adjustAddress(at + 4));
+    return bd;
 }
 
-void MakeJAL(uintptr_t at, uintptr_t dest)
+uintptr_t MakeJAL(uintptr_t at, uintptr_t dest)
 {
+    uintptr_t bd = GetBranchDestination(adjustAddress(at));
     WriteMemory32(adjustAddress(at), (0x0C000000 | ((adjustAddress(dest)) >> 2)));
-}
-
-void MakeCALL(uintptr_t at, uintptr_t dest)
-{
-    WriteMemory32(adjustAddress(at), (0x0C000000 | (((adjustAddress(dest)) >> 2) & 0x03FFFFFF)));
+    return bd;
 }
 
 void MakeNOP(uintptr_t at)
@@ -218,12 +252,6 @@ void MakeLI(uintptr_t at, RegisterID reg, int32_t imm)
     injector.MakeJMP(functor + 8, at + 4); // should be +8 as well, but it won't work as well
     injector.MakeNOP(functor + 12);
     injector.MakeJMP(at, functor);
-}
-
-uint32_t parseCommand(uint32_t command, uint32_t from, uint32_t to)
-{
-    uint32_t mask = ((1 << (to - from + 1)) - 1) << from;
-    return (command & mask) >> from;
 }
 
 uint32_t isDelaySlotNearby(uintptr_t at)
@@ -319,6 +347,7 @@ struct injector_t injector =
     .AllocMemBlock = AllocMemBlock,
     .FreeMemBlock = FreeMemBlock,
     .GetGP = GetGP,
+    .SetGP = SetGP,
     .SetModuleBaseAddress = SetModuleBaseAddress,
     .SetGameBaseAddress = SetGameBaseAddress,
     .WriteMemoryRaw = WriteMemoryRaw,
@@ -337,10 +366,10 @@ struct injector_t injector =
     .ReadMemory64 = ReadMemory64,
     .ReadMemoryFloat = ReadMemoryFloat,
     .ReadMemoryDouble = ReadMemoryDouble,
+    .GetBranchDestination = GetBranchDestination,
     .MakeJMP = MakeJMP,
     .MakeJMPwNOP = MakeJMPwNOP,
     .MakeJAL = MakeJAL,
-    .MakeCALL = MakeCALL,
     .MakeNOP = MakeNOP,
     .MakeNOPWithSize = MakeNOPWithSize,
     .MakeRangedNOP = MakeRangedNOP,
