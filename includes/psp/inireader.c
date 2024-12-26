@@ -1,4 +1,5 @@
 #include "inireader.h"
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -38,21 +39,21 @@ void SetIniPath(const char* szFileName)
 
     static char buf[2000];
     inireader.iniBufSize = sizeof(buf);
-    inireader.iniBuf = &buf;
+    inireader.iniBuf = (int)buf;
     
     SceUID fileId = sceIoOpen(inireader.iniName, PSP_O_RDONLY, 0777);
     if (fileId < 0)
     {
         return;
     }
-    sceIoRead(fileId, inireader.iniBuf, inireader.iniBufSize);
+    sceIoRead(fileId, (void*)inireader.iniBuf, inireader.iniBufSize);
     sceIoClose(fileId);
 }
 
 int ReadInteger(char* szSection, char* szKey, int iDefaultValue)
 {
     int result = iDefaultValue;
-    if (rini_get_key(szSection, szKey, inireader.iniBuf, inireader.iniBufSize, &result, sizeof(result), INT_VAL))
+    if (rini_get_key(szSection, szKey, (char*)inireader.iniBuf, inireader.iniBufSize, &result, sizeof(result), INT_VAL))
     {
         return result;
     }
@@ -66,7 +67,7 @@ float ReadFloat(char* szSection, char* szKey, float fltDefaultValue)
 {
     int BufferSize = 30;
     char Buffer[BufferSize];
-    if (rini_get_key(szSection, szKey, inireader.iniBuf, inireader.iniBufSize, Buffer, BufferSize, STRING_VAL))
+    if (rini_get_key(szSection, szKey, (char*)inireader.iniBuf, inireader.iniBufSize, Buffer, BufferSize, STRING_VAL))
     {
         return (float)strtod(Buffer, NULL);
     }
@@ -79,7 +80,7 @@ float ReadFloat(char* szSection, char* szKey, float fltDefaultValue)
 bool ReadBoolean(char* szSection, char* szKey, bool bDefaultValue)
 {
     bool result = bDefaultValue;
-    if (rini_get_key(szSection, szKey, inireader.iniBuf, inireader.iniBufSize, &result, sizeof(result), BOOL_VAL))
+    if (rini_get_key(szSection, szKey, (char*)inireader.iniBuf, inireader.iniBufSize, &result, sizeof(result), BOOL_VAL))
     {
         return result;
     }
@@ -91,7 +92,7 @@ bool ReadBoolean(char* szSection, char* szKey, bool bDefaultValue)
 
 char* ReadString(char* szSection, char* szKey, char* szDefaultValue, char* Buffer, int BufferSize)
 {
-    if (rini_get_key(szSection, szKey, inireader.iniBuf, inireader.iniBufSize, Buffer, BufferSize, STRING_VAL))
+    if (rini_get_key(szSection, szKey, (char*)inireader.iniBuf, inireader.iniBufSize, Buffer, BufferSize, STRING_VAL))
     {
         while (*Buffer == ' ')
             *Buffer++;
