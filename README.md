@@ -78,7 +78,7 @@ Then, in your CFW use PSPModBaseBoot.prx as the plugin for GAME (or your specifi
 
 ### Recommended plugins for PSP debugging
 
-- [PSPLINK](http://pspdev.github.io/psplinkusb/) - required for runtime debugging. Enable it by adding "psplink.prx" to the plugins list. Also make sure that USB Charging is NOT enabled.
+- [PSPLINK](https://pspdev.github.io/debugging.html#psplink) - required for runtime debugging. Enable it by adding "psplink.prx" to the plugins list. Also make sure that USB Charging is NOT enabled.
 
 - [libkprintf](https://github.com/Linblow/libkprintf) - an addon which hooks kernel printf functions to restore its functionality via sio and psplink. Use this in combination with psplink to get print output via pspsh. Keep in mind that it may take it a bit to hook in so you might not catch early prints.
 
