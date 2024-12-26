@@ -17,7 +17,7 @@ int AllocMemBlock(int size, int* id) {
     if (*id < 0) {
         return 0;
     }
-    return sceKernelGetBlockHeadAddr(*id);
+    return (int)sceKernelGetBlockHeadAddr(*id);
 }
 
 void FreeMemBlock(int id)
@@ -77,17 +77,17 @@ uintptr_t adjustAddress(uintptr_t addr)
 
 void WriteMemoryRaw(uintptr_t addr, void* value, size_t size)
 {
-    memcpy(adjustAddress(addr), value, size);
+    memcpy((void*)adjustAddress(addr), value, size);
 }
 
 void ReadMemoryRaw(uintptr_t addr, void* ret, size_t size)
 {
-    memcpy(ret, adjustAddress(addr), size);
+    memcpy(ret, (void*)adjustAddress(addr), size);
 }
 
 void MemoryFill(uintptr_t addr, uint8_t value, size_t size)
 {
-    memset(adjustAddress(addr), value, size);
+    memset((unsigned char*)adjustAddress(addr), value, size);
 }
 
 void WriteInstr(uintptr_t addr, uint32_t value)
@@ -181,7 +181,7 @@ uintptr_t MakeJMPwNOP(uintptr_t at, uintptr_t dest)
 {
     uintptr_t bd = GetBranchDestination(adjustAddress(at));
     WriteMemory32(adjustAddress(at), (0x08000000 | ((adjustAddress(dest) & 0x0FFFFFFC) >> 2)));
-    MakeNOP(adjustAddress(at + 4));
+    injector.MakeNOP(adjustAddress(at + 4));
     return bd;
 }
 
