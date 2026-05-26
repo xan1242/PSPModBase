@@ -164,7 +164,7 @@ void CheckModulesPSP()
         return;
 
     injector.SetGameBaseAddress(mod.text_addr, mod.text_size);
-    injector.SetModuleBaseAddress(this_module.text_addr, this_module.text_addr);
+    injector.SetModuleBaseAddress(this_module.text_addr, this_module.text_size);
 
     MainInit();
 }
